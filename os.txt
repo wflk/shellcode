@@ -43,3 +43,18 @@
 
   Stack Ptr: 0x7ffc79c61b68
   Syscall E: 0xfffffffffffffff2
+
+  sizeof(uint16_t) = 2
+  sizeof(uint32_t) = 4
+  sizeof(void*)    = 8
+
+  Allocating executable memory...
+  Executing function...
+
+  OS       : FreeBSD x64
+  Binary   : 64-bit
+  Segments : cs=0x43 ds=0x3B es=0x3B
+  Segments : fs=0x13 gs=0x1B ss=0x3B
+
+  Stack Ptr: 0x7fffffffe8a8
+  Syscall E: 0x9
