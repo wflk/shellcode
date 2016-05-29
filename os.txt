@@ -1,60 +1,15 @@
 
-* Debian x86 ELF32
-sizeof(void*) = 4
-sizeof(uint32_t) = 4
-NIX 32-bit cs=0x73 ds=0x7B es=0x7B fs=0x00 gs=0x33 ss=0x7B sp=0xbff83c98 sys_close error = 0xfffffff7
+  sizeof(uint16_t) = 2
+  sizeof(uint32_t) = 4
+  sizeof(void*)    = 4
 
-* Debian x64 ELF32
-sizeof(void*) = 4
-sizeof(uint32_t) = 4
-NIX 32-bit cs=0x23 ds=0x2B es=0x2B fs=0x00 gs=0x63 ss=0x2B sp=0xffa60698 sys_close error = 0xfffffff7
+  Allocating executable memory...
+  Executing function...
 
-* Debian x64 ELF64
-sizeof(void*) = 8
-sizeof(uint32_t) = 4
-NIX 64-bit cs=0x33 ds=0x00 es=0x00 fs=0x00 gs=0x00 ss=0x2B sp=0xfffffff29269cc10 sys_close error = 0xfffffff2
+  OS       : OpenBSD x32
+  Binary   : 32-bit
+  Segments : cs=0x2B ds=0x33 es=0x33
+  Segments : fs=0x5B gs=0x63 ss=0x33
 
-============================================================
-
-* Windows 7 x64 PE32
-sizeof(void*) = 4
-sizeof(uint32_t) = 4
-Windows 32-bit cs=0x23 ds=0x2B es=0x2B fs=0x53 gs=0x2B ss=0x2B sp=0020F910 sys_close error = 00000000
-
-* Windows 7 x64 PE64
-sizeof(void*) = 8
-sizeof(uint32_t) = 4
-Windows 64-bit cs=0x33 ds=0x2B es=0x2B fs=0x53 gs=0x2B ss=0x2B sp=C0000005002FF740 sys_close error = 00000000C0000005
-
-Windows 10 x64 PE64
-sizeof(void*) = 8
-sizeof(uint32_t) = 4
-
-NIX 64-bit cs=0x00 ds=0x00 es=0x00 fs=0x00 gs=0x00 ss=0x00 sp=0000000000000000 sys_close error = 0000000000000000
-
-Compiled as admin
-sizeof(void*) = 4
-sizeof(uint32_t) = 4
-
-Windows 32-bit cs=0x23 ds=0x2B es=0x2B fs=0x53 gs=0x2B ss=0x2B sp=0018F7C8 sys_close error = 00000000
-
-* Windows 10 x64 PE32
-sizeof(void*) = 4
-sizeof(uint32_t) = 4
-
-Windows 32-bit cs=0x23 ds=0x2B es=0x2B fs=0x53 gs=0x2B ss=0x2B sp=0018FC98 sys_close error = 00000000
-
-============================================================
-* FreeBSD x64 ELF64
-sizeof(void*) = 8
-sizeof(uint32_t) = 4
-NIX 64-bit cs=0x43 ds=0x3B es=0x3B fs=0x13 gs=0x1B ss=0x3B sp=0x9ffffe8b0 sys_close error = 0x9
-
-============================================================
-* OSX x64 
-sizeof(void*) = 8
-sizeof(uint32_t) = 4
-NIX 64-bit cs=0x2B ds=0x00 es=0x00 fs=0x00 gs=0x00 ss=0x23 sp=0x658ba68a0 sys_close error = 0x6
-
-
-
+  Stack Ptr: 0xcf7ca184
+  Syscall E: 0x9
