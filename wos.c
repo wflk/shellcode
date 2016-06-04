@@ -46,6 +46,12 @@
 #include <errno.h>
 #endif
 
+#if defined(__x86_64__)
+typedef uint64_t ptr_t;
+#else
+typedef uint32_t ptr_t;
+#endif
+
 #if defined(_MSC_VER)
 #define ALIGNED_(x) __declspec(align(x))
 #else
@@ -244,7 +250,7 @@ int get_ctx(proc_ctx *c)
 
 int main(void) {
   proc_ctx pc;
-  uint8_t sc_v;
+  ptr_t sc_v;
   char *os="Unrecognized";
   
   setbuf(stdout, NULL);
@@ -259,7 +265,8 @@ int main(void) {
   if (get_ctx(&pc)) {
     
     // determine operating system
-    sc_v = (uint32_t)pc.sc & 0xFF;
+    sc_v = (ptr_t)pc.sc;
+    sc_v &= 0xFF;
     
     if (sc_v==0 || sc_v==0x05) os="Windows";
     else if (sc_v==0x06) os="OSX"; // might be wrong
