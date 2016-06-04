@@ -7,10 +7,18 @@
     
 get_ctx:
 _get_ctx:
-    push   edi          ; save edis
-    push   ecx          ; save pointer to proc_ctx if 64-bit
-    pop    edi          ; pop in ecx
+    push   edi        ; save edi if windoze
     
+    push   ecx        ; put ptr to proc_ctx in edi
+    pop    edi
+    
+    push   esp
+    pop    eax
+    shr    eax, 24
+    jz     is_32
+    pop    edi
+    push   edi    
+is_32:
     xor    eax, eax
     dec    eax
     neg    eax          ; ecx=0 if 64-bit
@@ -38,7 +46,7 @@ x64:
     stosw
     mov    ax, ss
     stosw
-    int3
+    ;int3
     ; get stack pointer
     push   esp
     pop    eax
