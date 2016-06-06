@@ -195,6 +195,8 @@ int main(void) {
   if (get_ctx(&pc)) {
     printf ("\n%s %i-bit cs=0x%02X ds=0x%02X es=0x%02X fs=0x%02X gs=0x%02X ss=0x%02X sp=%p sys_close error = %p\n",
       pc.win ? "Windows" : "NIX", pc.emu ? 32 : 64, pc.cs, pc.ds, pc.es, pc.fs, pc.gs, pc.ss, pc.sp, pc.sc);
+  } else {
+    printf ("\nsomething went wrong in function..");
   }
   return 0;
 }
