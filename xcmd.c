@@ -172,10 +172,9 @@ void bin2file (uint8_t bin[], size_t len)
 void xcode(void *code, size_t code_len, char *cmd, size_t cmd_len)
 {
   void *bin;
-  int  i;
   uint8_t *p;
   char args[]="\xFF-c\xFF/bin//sh\x00";
-  size_t total_len, arg_len;
+  size_t arg_len;
   
   arg_len=strlen(args) + 1;
   
@@ -208,9 +207,9 @@ void xcode(void *code, size_t code_len, char *cmd, size_t cmd_len)
     ((void(*)())bin)();
     
 #ifdef WIN
-    VirtualFree (bin, code_len, MEM_RELEASE);
+    VirtualFree (bin, code_len+cmd_len+arg_len, MEM_RELEASE);
 #else
-    munmap (bin, code_len);
+    munmap (bin, code_len+cmd_len+arg_len);
 #endif
   }
 }
