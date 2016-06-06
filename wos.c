@@ -287,7 +287,7 @@ int main(void) {
         } else arch="32";
       } else if (pc.ds==0x2B || pc.ds==0x3B) {
         os="FreeBSD";
-        if (pc.ds==0x43) {
+        if (pc.ds==0x3B) {
           arch="64";
         } else arch="32";
       } else {
