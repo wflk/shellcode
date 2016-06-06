@@ -1,9 +1,11 @@
 
+    
+    %ifndef BIN
+      global _get_ctx
+      global get_ctx
+    %endif
 
     bits 32
-    
-    global _get_ctx
-    global get_ctx
     
 get_ctx:
 _get_ctx:
@@ -52,9 +54,7 @@ x64:
     pop    eax
     stosd            ; save 32-bits of stack pointer
     jecxz  x32_native
-    bits   64
     shr    eax, 32
-    bits   32
     stosd            ; only if 64-bit
     push   ecx       ; save ecx since bsd trashes it
     push   edi       ; save edi because we need to use it
@@ -69,7 +69,7 @@ x64:
     pop    ecx       ; restore ecx
     
     stosd
-    rol    eax, 32
+    shr    eax, 32
     stosd
 x32_l3:
     pop    edi
