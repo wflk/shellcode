@@ -98,10 +98,10 @@ void xstrerror (char *fmt, ...)
       NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
       (LPSTR)&error, 0, NULL))
   {
-    printf ("[ %s : %s\n", buffer, error);
+    printf ("\n  E: %s : %s\n", buffer, error);
     LocalFree (error);
   } else {
-    printf ("[ %s : %lu\n", buffer, dwError);
+    printf ("\n  E: %s : %lu\n", buffer, dwError);
   }
 }
 #else
@@ -192,11 +192,15 @@ typedef void (*get_ctx_t)(proc_ctx*);
 int get_ctx(proc_ctx *c)
 {
   get_ctx_t func;
+  #ifdef WIN
+  DWORD op;
+  #endif
   int ok=0;
   
+  printf ("\n  Allocating executable memory...");
 #ifdef WIN
   func=(get_ctx_t)VirtualAlloc (0, w_SIZE, 
-    MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    MEM_COMMIT, PAGE_READWRITE);
 #else
   func=(get_ctx_t)mmap (0, w_SIZE, 
     PROT_EXEC | PROT_WRITE | PROT_READ, 
@@ -204,9 +208,19 @@ int get_ctx(proc_ctx *c)
 #endif
   if (func!=NULL)
   {
+    printf ("\n  Executing function...");
     memcpy (func, w, w_SIZE);
+    #ifdef WIN
+      if (VirtualProtect((LPVOID)func, w_SIZE, PAGE_EXECUTE, &op)) {
+        func(c);
+        ok=1;
+      } else {
+        xstrerror("VirtualProtect()");
+      }
+    #else
     func(c);
     ok=1;
+    #endif
 #ifdef WIN
     VirtualFree (func, w_SIZE, MEM_RELEASE);
 #else
@@ -216,7 +230,7 @@ int get_ctx(proc_ctx *c)
     #ifdef WIN
     xstrerror("VirtualAlloc()");
     #else
-    printf ("\nmmap(): %i\n", errno);
+    printf ("\n  E: mmap(): %i\n", errno);
     #endif
   }
   return ok;
@@ -237,7 +251,7 @@ int main(void) {
   
   if (get_ctx(&pc)) {
     
-    printf ("\n  OS       : %s %i-bit", 
+    printf ("\n\n  OS       : %s %i-bit", 
       pc.win ? "Windows" : "NIX",
       pc.emu ? 32 : 64);
     
@@ -247,7 +261,7 @@ int main(void) {
     printf ("\n  Segments : fs=0x%02X gs=0x%02X ss=0x%02X\n",
       pc.fs, pc.gs, pc.ss);
     
-    printf ("\n  Stack Ptr: %p", pc.sp);
+    printf ("\n  Stack Ptr: %p",   pc.sp);
     printf ("\n  Syscall E: %p\n", pc.sc);
   } else {
     printf ("\nsomething went wrong in function..");
