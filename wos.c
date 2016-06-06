@@ -256,8 +256,10 @@ int main(void) {
   
   if (get_ctx(&pc)) {
     
-    printf ("\n\n  OS       : %s %i-bit", 
-      pc.win ? "Windows" : "NIX",
+    printf ("\n\n  OS       : %s", 
+      pc.win ? "Windows" : "NIX");
+    
+    printf ("\n  Binary   : %i-bit",
       pc.emu ? 32 : 64);
     
     printf ("\n  Segments : cs=0x%02X ds=0x%02X es=0x%02X",
