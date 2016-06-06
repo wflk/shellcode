@@ -9,8 +9,8 @@
     
 get_ctx:
 _get_ctx:
-    push   edi          ; save edi for windows/bsd/linux
     push   ebx          ; save ebx for 32-bit bsd/linux
+    push   edi          ; save edi for windows/bsd/linux
     
     push   ecx          ; for windows, put ptr to proc_ctx in edi
     pop    edi
@@ -76,8 +76,8 @@ x64:
     ror    eax, 32
     stosd
 x32_l3:
-    pop    ebx
     pop    edi
+    pop    ebx
     push   1
     pop    eax
     ret

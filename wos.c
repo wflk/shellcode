@@ -86,12 +86,11 @@ void xstrerror (char *fmt, ...)
 
 #ifndef TEST
 
-
 #define w_SIZE 124
 
 char w[]= {
-  /* 0000 */ "\x57"             /* push edi           */
-  /* 0001 */ "\x53"             /* push ebx           */
+  /* 0000 */ "\x53"             /* push ebx           */
+  /* 0001 */ "\x57"             /* push edi           */
   /* 0002 */ "\x51"             /* push ecx           */
   /* 0003 */ "\x5f"             /* pop edi            */
   /* 0004 */ "\x54"             /* push esp           */
@@ -144,8 +143,8 @@ char w[]= {
   /* 005A */ "\x48"             /* dec eax            */
   /* 005B */ "\xc1\xc8\x20"     /* ror eax, 0x20      */
   /* 005E */ "\xab"             /* stosd              */
-  /* 005F */ "\x5b"             /* pop ebx            */
-  /* 0060 */ "\x5f"             /* pop edi            */
+  /* 005F */ "\x5f"             /* pop edi            */
+  /* 0060 */ "\x5b"             /* pop ebx            */
   /* 0061 */ "\x6a\x01"         /* push 0x1           */
   /* 0063 */ "\x58"             /* pop eax            */
   /* 0064 */ "\xc3"             /* ret                */
