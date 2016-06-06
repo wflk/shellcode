@@ -206,7 +206,12 @@ int get_ctx(proc_ctx *c)
     PROT_EXEC | PROT_WRITE | PROT_READ, 
     MAP_ANON  | MAP_PRIVATE, -1, 0);
 #endif
+
+#ifdef WIN
   if (func!=NULL)
+#else
+  if (func!=MAP_FAILED)
+#endif
   {
     printf ("\n  Executing function...");
     memcpy (func, w, w_SIZE);
