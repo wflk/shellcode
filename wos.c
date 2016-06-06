@@ -252,6 +252,7 @@ int main(void) {
   proc_ctx pc;
   ptr_t sc_v;
   char *os="Unrecognized";
+  char *arch="unknown";
   
   setbuf(stdout, NULL);
   
@@ -268,12 +269,38 @@ int main(void) {
     sc_v = (ptr_t)pc.sc;
     sc_v &= 0xFF;
     
-    if (sc_v==0 || sc_v==0x05) os="Windows";
-    else if (sc_v==0x06) os="OSX"; // might be wrong
-    else if (sc_v==0x09) os="BSD"; // FreeBSD or OpenBSD
-    else if (sc_v==0xF2 || sc_v==0xF7) os="Linux";
+    if (sc_v==0 || sc_v==0x05) {
+      os="Windows";
+      if (pc.cs==0x23 || pc.cs==0x33) { 
+        arch="64"; 
+      } else arch="32";
+    } else if (sc_v==0x06) {
+      os="OSX"; // might be wrong
+      if (pc.ds==0) {
+        arch="64";
+      } else arch="32";
+    } else if (sc_v==0x09) {
+      if (pc.ds==0x23 || pc.ds==0x33) {
+        os="OpenBSD";
+        if (pc.ds==0x23) {
+          arch="64";
+        } else arch="32";
+      } else if (pc.ds==0x2B || pc.ds==0x3B) {
+        os="FreeBSD";
+        if (pc.ds==0x43) {
+          arch="64";
+        } else arch="32";
+      } else {
+        os="BSD";
+      }
+    } else if (sc_v==0xF2 || sc_v==0xF7) {
+      os="Linux";
+      if (pc.cs==0x23 || pc.cs==0x33) { 
+        arch="64"; 
+      } else arch="32";
+    }
     
-    printf ("\n\n  OS       : %s", os);
+    printf ("\n\n  OS       : %s x%s", os, arch);
     
     printf ("\n  Binary   : %i-bit",
       pc.emu ? 32 : 64);
