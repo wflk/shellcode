@@ -244,6 +244,8 @@ int get_ctx(proc_ctx *c)
 
 int main(void) {
   proc_ctx pc;
+  uint8_t sc_v;
+  char *os="Unrecognized";
   
   setbuf(stdout, NULL);
   
@@ -256,8 +258,15 @@ int main(void) {
   
   if (get_ctx(&pc)) {
     
-    printf ("\n\n  OS       : %s", 
-      pc.win ? "Windows" : "NIX");
+    // determine operating system
+    sc_v = (uint32_t)pc.sc & 0xFF;
+    
+    if (sc_v==0 || sc_v==0x05) os="Windows";
+    else if (sc_v==0x06) os="OSX"; // might be wrong
+    else if (sc_v==0x09) os="BSD"; // FreeBSD or OpenBSD
+    else if (sc_v==0xF2 || sc_v==0xF7) os="Linux";
+    
+    printf ("\n\n  OS       : %s", os);
     
     printf ("\n  Binary   : %i-bit",
       pc.emu ? 32 : 64);
