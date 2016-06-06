@@ -12,7 +12,15 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#if defined (_WIN32) || defined(_WIN64)
+#if defined (_WIN64)
+#define __x86_64__
+typedef uint64_t ptr_t;
+#else
+#define __i386__
+typedef uint32_t ptr_t;
+#endif
+
+#if defined (_WIN32) || defined (_WIN64)
 #define WIN
 #include <windows.h>
 #include <shlwapi.h>
@@ -22,7 +30,16 @@
 #include <errno.h>
 #endif
 
-typedef struct _proc_ctx_t {
+#if defined(_MSC_VER)
+#define ALIGNED_(x) __declspec(align(x))
+#else
+#if defined(__GNUC__)
+#define ALIGNED_(x) __attribute__ ((aligned(x)))
+#endif
+#endif
+
+#pragma pack(1)
+typedef struct ALIGNED_(1) _proc_ctx_t {
   uint32_t emu;
   uint32_t win;
   // segment registers
@@ -34,8 +51,9 @@ typedef struct _proc_ctx_t {
   uint16_t ss;
   
   // stack pointer
-  void*    sp;
-  void*    sc;
+  ptr_t    sp;
+  // error returned from syscall if 64-bit
+  ptr_t    sc;
 } proc_ctx;
 
 #ifdef WIN
@@ -76,7 +94,7 @@ void xstrerror (char *fmt, ...)
 
 #ifndef TEST
 
-#define w_SIZE 117
+#define w_SIZE 122
 
 char w[]= {
   /* 0000 */ "\x57"             /* push edi           */
@@ -98,7 +116,7 @@ char w[]= {
   /* 001B */ "\x54"             /* push esp           */
   /* 001C */ "\x58"             /* pop eax            */
   /* 001D */ "\xc1\xe8\x18"     /* shr eax, 0x18      */
-  /* 0020 */ "\x0f\x94\xc0"     /* setz al            */
+  /* 0020 */ "\x0f\x94\xd0"     /* setz al            */
   /* 0023 */ "\xab"             /* stosd              */
   /* 0024 */ "\x66\x8c\xc8"     /* mov ax, cs         */
   /* 0027 */ "\x66\xab"         /* stosw              */
@@ -115,36 +133,40 @@ char w[]= {
   /* 0042 */ "\x54"             /* push esp           */
   /* 0043 */ "\x58"             /* pop eax            */
   /* 0044 */ "\xab"             /* stosd              */
-  /* 0045 */ "\xe3\x17"         /* jecxz 0x5e         */
-  /* 0047 */ "\xc1\xe8\x20"     /* shr eax, 0x20      */
-  /* 004A */ "\xab"             /* stosd              */
-  /* 004B */ "\x51"             /* push ecx           */
-  /* 004C */ "\x57"             /* push edi           */
-  /* 004D */ "\x6a\xff"         /* push 0xffffffff    */
-  /* 004F */ "\x5f"             /* pop edi            */
-  /* 0050 */ "\x6a\x06"         /* push 0x6           */
-  /* 0052 */ "\x58"             /* pop eax            */
-  /* 0053 */ "\x0f\x05"         /* syscall            */
-  /* 0055 */ "\x5f"             /* pop edi            */
-  /* 0056 */ "\x59"             /* pop ecx            */
-  /* 0057 */ "\xab"             /* stosd              */
-  /* 0058 */ "\xc1\xc0\x20"     /* rol eax, 0x20      */
-  /* 005B */ "\xab"             /* stosd              */
-  /* 005C */ "\x5f"             /* pop edi            */
-  /* 005D */ "\xc3"             /* ret                */
-  /* 005E */ "\x66\x8c\xe9"     /* mov cx, gs         */
-  /* 0061 */ "\xe3\xf9"         /* jecxz 0x5c         */
-  /* 0063 */ "\x54"             /* push esp           */
-  /* 0064 */ "\x58"             /* pop eax            */
-  /* 0065 */ "\xc1\xe8\x18"     /* shr eax, 0x18      */
-  /* 0068 */ "\x74\xf2"         /* jz 0x5c            */
-  /* 006A */ "\x6a\xff"         /* push 0xffffffff    */
-  /* 006C */ "\x5b"             /* pop ebx            */
-  /* 006D */ "\x6a\x06"         /* push 0x6           */
-  /* 006F */ "\x58"             /* pop eax            */
-  /* 0070 */ "\xcd\x80"         /* int 0x80           */
-  /* 0072 */ "\xab"             /* stosd              */
-  /* 0073 */ "\xeb\xe7"         /* jmp 0x5c           */
+  /* 0045 */ "\xe3\x1c"         /* jecxz 0x63         */
+  /* 0047 */ "\x48"             /* dec eax            */
+  /* 0048 */ "\xc1\xc8\x20"     /* ror eax, 0x20      */
+  /* 004B */ "\xab"             /* stosd              */
+  /* 004C */ "\x51"             /* push ecx           */
+  /* 004D */ "\x57"             /* push edi           */
+  /* 004E */ "\x6a\xff"         /* push 0xffffffff    */
+  /* 0050 */ "\x5f"             /* pop edi            */
+  /* 0051 */ "\x6a\x06"         /* push 0x6           */
+  /* 0053 */ "\x58"             /* pop eax            */
+  /* 0054 */ "\x0f\x05"         /* syscall            */
+  /* 0056 */ "\x5f"             /* pop edi            */
+  /* 0057 */ "\x59"             /* pop ecx            */
+  /* 0058 */ "\xab"             /* stosd              */
+  /* 0059 */ "\x48"             /* dec eax            */
+  /* 005A */ "\xc1\xc8\x20"     /* ror eax, 0x20      */
+  /* 005D */ "\xab"             /* stosd              */
+  /* 005E */ "\x5f"             /* pop edi            */
+  /* 005F */ "\x6a\x01"         /* push 0x1           */
+  /* 0061 */ "\x58"             /* pop eax            */
+  /* 0062 */ "\xc3"             /* ret                */
+  /* 0063 */ "\x66\x8c\xe9"     /* mov cx, gs         */
+  /* 0066 */ "\xe3\xf6"         /* jecxz 0x5e         */
+  /* 0068 */ "\x54"             /* push esp           */
+  /* 0069 */ "\x58"             /* pop eax            */
+  /* 006A */ "\xc1\xe8\x18"     /* shr eax, 0x18      */
+  /* 006D */ "\x74\xef"         /* jz 0x5e            */
+  /* 006F */ "\x6a\xff"         /* push 0xffffffff    */
+  /* 0071 */ "\x5b"             /* pop ebx            */
+  /* 0072 */ "\x6a\x06"         /* push 0x6           */
+  /* 0074 */ "\x58"             /* pop eax            */
+  /* 0075 */ "\xcd\x80"         /* int 0x80           */
+  /* 0077 */ "\xab"             /* stosd              */
+  /* 0078 */ "\xeb\xe4"         /* jmp 0x5e           */
 };
 
 typedef void (*get_ctx_t)(proc_ctx*);
@@ -188,8 +210,8 @@ int main(void) {
   
   setbuf(stdout, NULL);
   
-  printf ("\nsizeof(void*) = %i\nsizeof(uint32_t) = %i\n", 
-    sizeof(void*), sizeof(uint32_t));
+  printf ("\nsizeof(void*) = %i\nsizeof(uint16_t) = %i\nsizeof(uint32_t) = %i\n", 
+    sizeof(void*), sizeof(uint16_t), sizeof(uint32_t));
   
   memset(&pc, 0, sizeof(pc));
   
