@@ -19,6 +19,7 @@
 #pragma comment (lib, "shlwapi.lib")
 #else
 #include <sys/mman.h>
+#include <errno.h>
 #endif
 
 typedef struct _proc_ctx_t {
