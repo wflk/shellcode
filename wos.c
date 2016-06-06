@@ -12,14 +12,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#if defined (_WIN64)
-#define __x86_64__
-typedef uint64_t ptr_t;
-#else
-#define __i386__
-typedef uint32_t ptr_t;
-#endif
-
 #if defined (_WIN32) || defined (_WIN64)
 #define WIN
 #include <windows.h>
@@ -51,9 +43,9 @@ typedef struct ALIGNED_(1) _proc_ctx_t {
   uint16_t ss;
   
   // stack pointer
-  ptr_t    sp;
+  void*    sp;
   // error returned from syscall if 64-bit
-  ptr_t    sc;
+  void*    sc;
 } proc_ctx;
 
 #ifdef WIN
@@ -210,14 +202,27 @@ int main(void) {
   
   setbuf(stdout, NULL);
   
-  printf ("\nsizeof(void*) = %i\nsizeof(uint16_t) = %i\nsizeof(uint32_t) = %i\n", 
-    sizeof(void*), sizeof(uint16_t), sizeof(uint32_t));
+  printf ("\n  sizeof(uint16_t) = %i"
+          "\n  sizeof(uint32_t) = %i"
+          "\n  sizeof(void*)    = %i\n", 
+    sizeof(uint16_t), sizeof(uint32_t), sizeof(void*));
   
   memset(&pc, 0, sizeof(pc));
   
   if (get_ctx(&pc)) {
-    printf ("\n%s %i-bit cs=0x%02X ds=0x%02X es=0x%02X fs=0x%02X gs=0x%02X ss=0x%02X sp=%p sys_close error = %p\n",
-      pc.win ? "Windows" : "NIX", pc.emu ? 32 : 64, pc.cs, pc.ds, pc.es, pc.fs, pc.gs, pc.ss, pc.sp, pc.sc);
+    
+    printf ("\n  OS       : %s %i-bit", 
+      pc.win ? "Windows" : "NIX",
+      pc.emu ? 32 : 64);
+    
+    printf ("\n  Segments : cs=0x%02X ds=0x%02X es=0x%02X",
+      pc.cs, pc.ds, pc.es);
+      
+    printf ("\n  Segments : fs=0x%02X gs=0x%02X ss=0x%02X\n",
+      pc.fs, pc.gs, pc.ss);
+    
+    printf ("\n  Stack Ptr: %p", pc.sp);
+    printf ("\n  Syscall E: %p\n", pc.sc);
   } else {
     printf ("\nsomething went wrong in function..");
   }
