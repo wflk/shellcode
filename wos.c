@@ -26,6 +26,8 @@ void get_ctx(proc_ctx *);
 void main(void) {
   proc_ctx pc;
   
+  printf ("\nsizeof(void*) = %u", sizeof(void*));
+  
   memset(&pc, 0, sizeof(pc));
   get_ctx(&pc);
       

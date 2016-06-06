@@ -38,13 +38,15 @@ x64:
     stosw
     mov    ax, ss
     stosw
-    
+    int3
     ; get stack pointer
     push   esp
     pop    eax
     stosd            ; save 32-bits of stack pointer
-    jecxz  x32_l3    ; skip rest
+    jecxz  x32_native
+    bits   64
     shr    eax, 32
+    bits   32
     stosd            ; only if 64-bit
     push   ecx       ; save ecx since bsd trashes it
     push   edi       ; save edi because we need to use it
@@ -59,10 +61,27 @@ x64:
     pop    ecx       ; restore ecx
     
     stosd
-    shr    eax, 32
+    rol    eax, 32
     stosd
 x32_l3:
     pop    edi
     ret
+x32_native:
+    mov    cx, gs    ; win32 native? skip it
+    jecxz  x32_l3
+    
+    push   esp
+    pop    eax
+    shr    eax, 24
+    jz     x32_l3
+    
+    push   -1
+    pop    ebx
+    push   6
+    pop    eax
+    int    0x80
+    stosd
+    jmp    x32_l3
+    
     
     
