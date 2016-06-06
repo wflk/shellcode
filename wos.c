@@ -15,6 +15,8 @@
 #if defined (_WIN32) || defined(_WIN64)
 #define WIN
 #include <windows.h>
+#include <shlwapi.h>
+#pragma comment (lib, "shlwapi.lib")
 #else
 #include <sys/mman.h>
 #endif
@@ -34,6 +36,42 @@ typedef struct _proc_ctx_t {
   void*    sp;
   void*    sc;
 } proc_ctx;
+
+#ifdef WIN
+/**F*****************************************************************/
+void xstrerror (char *fmt, ...) 
+/**
+ * PURPOSE : Display windows error
+ *
+ * RETURN :  Nothing
+ *
+ * NOTES :   None
+ *
+ *F*/
+{
+  char    *error=NULL;
+  va_list arglist;
+  char    buffer[2048];
+  DWORD   dwError=GetLastError();
+  
+  va_start (arglist, fmt);
+  wvnsprintf (buffer, sizeof(buffer) - 1, fmt, arglist);
+  va_end (arglist);
+  
+  if (FormatMessage (
+      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+      NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+      (LPSTR)&error, 0, NULL))
+  {
+    printf ("[ %s : %s\n", buffer, error);
+    LocalFree (error);
+  } else {
+    printf ("[ %s : %lu\n", buffer, dwError);
+  }
+}
+#else
+#define xstrerror printf
+#endif
 
 #ifndef TEST
 
@@ -108,17 +146,18 @@ char w[]= {
   /* 0073 */ "\xeb\xe7"         /* jmp 0x5c           */
 };
 
-typedef void (get_ctx_t)(proc_ctx*);
+typedef void (*get_ctx_t)(proc_ctx*);
 
-void get_ctx(proc_ctx *c)
+int get_ctx(proc_ctx *c)
 {
-  get_ctx_t *func;
+  get_ctx_t func;
+  int ok=0;
   
 #ifdef WIN
-  func=(get_ctx_t*)VirtualAlloc (0, w_SIZE, 
+  func=(get_ctx_t)VirtualAlloc (0, w_SIZE, 
     MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #else
-  func=(get_ctx_t*)mmap (0, w_SIZE, 
+  func=(get_ctx_t)mmap (0, w_SIZE, 
     PROT_EXEC | PROT_WRITE | PROT_READ, 
     MAP_ANON  | MAP_PRIVATE, -1, 0);
 #endif
@@ -126,13 +165,20 @@ void get_ctx(proc_ctx *c)
   {
     memcpy (func, w, w_SIZE);
     func(c);
-    
+    ok=1;
 #ifdef WIN
     VirtualFree (func, w_SIZE, MEM_RELEASE);
 #else
     munmap (func, w_SIZE);
 #endif
+  } else {
+    #ifdef WIN
+    xstrerror("VirtualAlloc()");
+    #else
+    printf ("\nmmap(): %i\n", errno);
+    #endif
   }
+  return ok;
 }
 #endif
 
@@ -141,13 +187,14 @@ int main(void) {
   
   setbuf(stdout, NULL);
   
-  printf ("\nsizeof(void*) = %u\nsizeof(uint32_t) = %u\n", 
+  printf ("\nsizeof(void*) = %i\nsizeof(uint32_t) = %i\n", 
     sizeof(void*), sizeof(uint32_t));
   
   memset(&pc, 0, sizeof(pc));
-  get_ctx(&pc);
-      
-  printf ("\n%s %i-bit cs=0x%02X ds=0x%02X es=0x%02X fs=0x%02X gs=0x%02X ss=0x%02X sp=%p sys_close error = %p\n",
-    pc.win ? "Windows" : "NIX", pc.emu ? 32 : 64, pc.cs, pc.ds, pc.es, pc.fs, pc.gs, pc.ss, pc.sp, pc.sc);
+  
+  if (get_ctx(&pc)) {
+    printf ("\n%s %i-bit cs=0x%02X ds=0x%02X es=0x%02X fs=0x%02X gs=0x%02X ss=0x%02X sp=%p sys_close error = %p\n",
+      pc.win ? "Windows" : "NIX", pc.emu ? 32 : 64, pc.cs, pc.ds, pc.es, pc.fs, pc.gs, pc.ss, pc.sp, pc.sc);
+  }
   return 0;
 }
