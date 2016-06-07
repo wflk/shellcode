@@ -269,7 +269,8 @@ int main(void) {
     sc_v = (ptr_t)pc.sc;
     sc_v &= 0xFF;
     
-    if (sc_v==0 || sc_v==0x05) {
+    // windows 7 returns 5, windows 10 returns 8
+    if (sc_v==0 || sc_v==0x05 || sc_v==0x08) {
       os="Windows";
       if (pc.cs==0x23 || pc.cs==0x33) { 
         arch="64"; 
