@@ -114,9 +114,28 @@ void xstrerror (char *fmt, ...)
 #define xstrerror printf
 #endif
 
+// from hacker's delight
+uint32_t crc32b(uint8_t m[], int len) {
+   int i, j;
+   uint32_t b, crc, mask;
+
+   i = 0;
+   crc = 0xFFFFFFFF;
+   
+   for (i=0; i<len; i++) {
+      b = m[i];            // Get next byte.
+      crc = crc ^ b;
+      for (j = 7; j >= 0; j--) {    // Do eight times.
+         mask = -(crc & 1);
+         crc = (crc >> 1) ^ (0xEDB88320 & mask);
+      }
+   }
+   return ~crc;
+}
+
 #ifndef TEST
 
-#define w_SIZE 128
+#define w_SIZE 138
 
 char w[]= {
   /* 0000 */ "\x53"             /* push ebx           */
@@ -190,11 +209,15 @@ char w[]= {
   /* 0076 */ "\x58"             /* pop eax            */
   /* 0077 */ "\x53"             /* push ebx           */
   /* 0078 */ "\x54"             /* push esp           */
-  /* 0079 */ "\xcd\x80"         /* int 0x80           */
-  /* 007B */ "\x59"             /* pop ecx            */
-  /* 007C */ "\x59"             /* pop ecx            */
-  /* 007D */ "\xab"             /* stosd              */
-  /* 007E */ "\xeb\xdf"         /* jmp 0x5f           */
+  /* 0079 */ "\x66\xc1\xe9\x08" /* shr cx, 0x8        */
+  /* 007D */ "\x75\x04"         /* jnz 0x83           */
+  /* 007F */ "\xcd\x80"         /* int 0x80           */
+  /* 0081 */ "\xeb\x02"         /* jmp 0x85           */
+  /* 0083 */ "\xcd\x91"         /* int 0x91           */
+  /* 0085 */ "\x59"             /* pop ecx            */
+  /* 0086 */ "\x59"             /* pop ecx            */
+  /* 0087 */ "\xab"             /* stosd              */
+  /* 0088 */ "\xeb\xd5"         /* jmp 0x5f           */
 };
 
 typedef void (*get_ctx_t)(proc_ctx*);
@@ -283,7 +306,7 @@ int main(void) {
       if (pc.cs==0x23 || pc.cs==0x33) { 
         arch="64"; 
       } else arch="32";
-    } else if (sc_v==0x06 || (sc_v==0x09 && pc.fs==0)) {
+    } else if (sc_v==0x06 || (sc_v==0x09 && pc.fs==0) && pc.gs != 0x1c3) {
       os="OSX";
       if (pc.ds==0) {
         arch="64";
@@ -297,6 +320,11 @@ int main(void) {
       } else if (pc.gs==0x1B && pc.ds==0x3B) {
         os="FreeBSD";
         if (pc.cs==0x43) {
+          arch="64";
+        } else arch="32";
+      } else if (pc.gs==0x1c3) {
+        os="Solaris";
+        if (pc.ds==0) {
           arch="64";
         } else arch="32";
       } else {
@@ -320,8 +348,9 @@ int main(void) {
     printf ("\n  Segments : fs=0x%02X gs=0x%02X ss=0x%02X\n",
       pc.fs, pc.gs, pc.ss);
     
-    printf ("\n  Stack Ptr: %p",   pc.sp);
-    printf ("\n  Syscall E: %p\n", pc.sc);
+    printf ("\n  Stack Ptr: %p", pc.sp);
+    printf ("\n  Syscall E: %p", pc.sc);
+    printf ("\n  CRC32    : %08X\n", crc32b((uint8_t*)&pc, sizeof(pc)));
   } else {
     printf ("\nsomething went wrong in function..");
   }
