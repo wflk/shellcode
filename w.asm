@@ -55,18 +55,18 @@ _get_ctx:
 is_32:
     xor    eax, eax     ; eax=0
     dec    eax          ; ignored if 64-bit
-    neg    eax          ; if eax==0 goto x64
+    neg    eax           ; if eax==0 goto x64
     jz     x64
     
     mov    edi, [esp+12] ; get proc_ctx from stack
 x64:
-    stosd               ; save emu value
+    stosd                ; save emu value
     lea    ecx, [eax-1]
     push   esp
     pop    eax
     shr    eax, 24
     setz   al
-    stosd               ; save win value
+    stosd                ; save win value
     ; save segment registers
     mov    ax, cs
     stosw
@@ -124,7 +124,11 @@ x32_native:
     pop    ebx
     push   6
     pop    eax
+    push   ebx
+    push   esp
     int    0x80
+    pop    ecx
+    pop    ecx
     stosd
     jmp    x32_l3
     
