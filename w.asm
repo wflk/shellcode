@@ -120,7 +120,6 @@ x32_native:
     shr    eax, 24
     jz     x32_l3
     
-    ; solaris?
     push   -1
     pop    ebx
     push   6
@@ -129,11 +128,11 @@ x32_native:
     push   ebx
     push   esp
     shr    cx, 8      ; 
-    jz     bsd_nix
-    int    0x91
-    jmp    pop_reg
-nix_bsd:
+    jnz    solaris
     int    0x80
+    jmp    pop_reg
+solaris:
+    int    0x91
 pop_reg:
     pop    ecx ; release args for fbsd
     pop    ecx
