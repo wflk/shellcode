@@ -29,7 +29,17 @@
   Syscall E: 0xfffffffffffffff2
 
   ; --------------------------------
+  
+  OS       : FreeBSD x32
+  Binary   : 32-bit
+  Segments : cs=0x33 ds=0x3B es=0x3B
+  Segments : fs=0x3B gs=0x1B ss=0x3B
 
+  Stack Ptr: 0xbfbfecc4
+  Syscall E: 0x9
+  
+  ; --------------------------------
+  
   OS       : FreeBSD x64
   Binary   : 64-bit
   Segments : cs=0x43 ds=0x3B es=0x3B
@@ -96,16 +106,3 @@
   
   Stack Ptr: 0x7fff5777b908 
   Syscall E: 0x6
-  
-  sizeof(uint16_t) = 2
-  sizeof(uint32_t) = 4
-  sizeof(void*)    = 4
-
-
-  OS       : FreeBSD x64
-  Binary   : 32-bit
-  Segments : cs=0x33 ds=0x3B es=0x3B
-  Segments : fs=0x3B gs=0x1B ss=0x3B
-
-  Stack Ptr: 0xbfbfecc4
-  Syscall E: 0x9

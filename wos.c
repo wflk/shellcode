@@ -116,7 +116,7 @@ void xstrerror (char *fmt, ...)
 
 #ifndef TEST
 
-#define w_SIZE 124
+#define w_SIZE 128
 
 char w[]= {
   /* 0000 */ "\x53"             /* push ebx           */
@@ -188,9 +188,13 @@ char w[]= {
   /* 0073 */ "\x5b"             /* pop ebx            */
   /* 0074 */ "\x6a\x06"         /* push 0x6           */
   /* 0076 */ "\x58"             /* pop eax            */
-  /* 0077 */ "\xcd\x80"         /* int 0x80           */
-  /* 0079 */ "\xab"             /* stosd              */
-  /* 007A */ "\xeb\xe3"         /* jmp 0x5f           */
+  /* 0077 */ "\x53"             /* push ebx           */
+  /* 0078 */ "\x54"             /* push esp           */
+  /* 0079 */ "\xcd\x80"         /* int 0x80           */
+  /* 007B */ "\x59"             /* pop ecx            */
+  /* 007C */ "\x59"             /* pop ecx            */
+  /* 007D */ "\xab"             /* stosd              */
+  /* 007E */ "\xeb\xdf"         /* jmp 0x5f           */
 };
 
 typedef void (*get_ctx_t)(proc_ctx*);
@@ -203,7 +207,7 @@ int get_ctx(proc_ctx *c)
   #endif
   int ok=0;
   
-  printf ("\n  Allocating executable memory...");
+  //printf ("\n  Allocating executable memory...");
 #ifdef WIN
   func=(get_ctx_t)VirtualAlloc (0, w_SIZE, 
     MEM_COMMIT, PAGE_READWRITE);
@@ -219,7 +223,7 @@ int get_ctx(proc_ctx *c)
   if (func!=MAP_FAILED)
 #endif
   {
-    printf ("\n  Executing function...");
+    //printf ("\n  Executing function...");
     memcpy (func, w, w_SIZE);
     #ifdef WIN
       if (VirtualProtect((LPVOID)func, w_SIZE, PAGE_EXECUTE, &op)) {
@@ -254,13 +258,17 @@ int main(void) {
   char *os="Unrecognized";
   char *arch="unknown";
   
+  printf ("\n  wos v0.1 - Identify OS on x86 architecture");
+  
   setbuf(stdout, NULL);
   
+#ifdef DEBUG
   printf ("\n  sizeof(uint16_t) = %i"
           "\n  sizeof(uint32_t) = %i"
           "\n  sizeof(void*)    = %i\n", 
     sizeof(uint16_t), sizeof(uint32_t), sizeof(void*));
-  
+#endif
+
   memset(&pc, 0, sizeof(pc));
   
   if (get_ctx(&pc)) {
