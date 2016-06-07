@@ -286,9 +286,9 @@ int main(void) {
         if (pc.ds==0x23) {
           arch="64";
         } else arch="32";
-      } else if (pc.ds==0x2B || pc.ds==0x3B) {
+      } else if (pc.gs==0x1B && pc.ds==0x3B) {
         os="FreeBSD";
-        if (pc.ds==0x3B) {
+        if (pc.cs==0x43) {
           arch="64";
         } else arch="32";
       } else {
