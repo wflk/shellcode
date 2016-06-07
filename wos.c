@@ -275,7 +275,7 @@ int main(void) {
       if (pc.cs==0x23 || pc.cs==0x33) { 
         arch="64"; 
       } else arch="32";
-    } else if (sc_v==0x06 || sc_v==0x09) {
+    } else if (sc_v==0x06 || (sc_v==0x09 && pc.fs==0)) {
       os="OSX";
       if (pc.ds==0) {
         arch="64";
