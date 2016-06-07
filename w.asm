@@ -124,10 +124,11 @@ x32_native:
     pop    ebx
     push   6
     pop    eax
+    ; required for 32-bit freebsd
     push   ebx
     push   esp
     int    0x80
-    pop    ecx
+    pop    ecx ; release args for fbsd
     pop    ecx
     stosd
     jmp    x32_l3
