@@ -78,4 +78,22 @@
   Stack Ptr: 000000000014FD88
   Syscall E: 00000000C0000008
 
-
+  ; --------------------------------
+  OS       : OSX x64
+  Binary   : 32-bit 
+  Segments : cs=0x1B ds=0x23 es=0x23 
+  Segments : fs=0x00 gs=0x0F ss=0x23
+  
+  Stack Ptr: 0xbff9f954 
+  Syscall E: 0x9
+  
+  ; --------------------------------
+  
+  OS       : OSX x64 
+  Binary   : 64-bit 
+  Segments : cs=0x2B ds=0x00 es=0x00 
+  Segments : fs=0x00 gs=0x00 ss=0x23 
+  
+  Stack Ptr: 0x7fff5777b908 
+  Syscall E: 0x6
+  
