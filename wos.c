@@ -96,7 +96,7 @@ typedef struct ALIGNED_(1) _sig_ctx_t {
   void *sc_err;
 } sig_ctx;
 
-// for each nibble of a 16-bit segment, set one bit if it true.
+// for each nibble of a 16-bit segment, set one bit if not zero.
 uint32_t sg_bits (sig_ctx *c) {
     int      i, j;
     uint32_t r=0;
@@ -313,21 +313,51 @@ int get_ctx(proc_ctx *c)
 #endif
 
 typedef struct _os_sig_t {
-    uint32_t crc32;
+    uint32_t crc;
     char     *os;
 } os_sig;
 
+// crc32 values of x86 cpu registers
 os_sig sigs[]=
-{
-  {0x53BD86D5, "Windows 7 x64 PE32"},
-  {0x765A985F, "Windows 7 x64 PE64"},
-  {0x6E3E5BEC, "FreeBSD x64"},
-  {0x4A74DA18, "FreeBSD x64"}
+{ { 0x90FF7C71, "Windows 95 32-bit PE32" },
+  { 0x1CC39FA2, "Windows NT 32-bit PE32" },
+  { 0x60A2BA79, "Windows 7 32-bit PE32"  },
+  { 0x53BD86D5, "Windows 7 64-bit PE32"  },
+  { 0x765A985F, "Windows 7 64-bit PE64"  },
+  { 0x0, "Windows 10 32-bit PE32" },
+  { 0x53BD86D5, "Windows 10 64-bit PE32" },
+  { 0x33E4AD6D, "Windows 10 64-bit PE64" },
+  { 0x8AF4260F, "FreeBSD 32-bit ELF32"   },
+  { 0x74C940E1, "FreeBSD 64-bit ELF32"   },
+  { 0xD52CD651, "FreeBSD 64-bit ELF64"   },
+  { 0x2EE7520C, "OpenBSD 32-bit ELF32"   },
+  { 0x1687E328, "OpenBSD 64-bit ELF64"   },
+  { 0x7DA04053, "Linux 32-bit ELF32"     },
+  { 0x71867338, "Linux 64-bit ELF32"     },
+  { 0xDC37329E, "Linux 64-bit ELF64"     },
+  { 0xA70D2C31, "Solaris 32-bit ELF32"   },
+  { 0x0, "Mac OSX 32-bit ELF32"   },
+  { 0x7996CCC6, "Mac OSX 64-bit ELF32"   },
+  { 0x5B047308, "Mac OSX 64-bit ELF64"   }
 };
+
+char *crc2os(uint32_t crc) {
+  int i;
+  static char *os="undefined";
+  
+  for (i=0; i<sizeof(sigs)/sizeof(os_sig); i++) {
+    if (sigs[i].crc==crc) {
+      os=sigs[i].os;
+      break;
+    }
+  }
+  return os;
+}
 
 int main(void) {
   proc_ctx pc;
-  sig_ctx sc;
+  sig_ctx  sc;
+  uint32_t crc;
   
   ptr_t sc_v;
   char *os="Unrecognized";
@@ -414,7 +444,8 @@ int main(void) {
     printf ("\n  Syscall E: 0x%p", pc.sc);
     
     printf ("\n  Segments : 0x%08X", sc.segbits);
-    printf ("\n  CRC32    : 0x%08X\n", crc32b((uint8_t*)&sc, sizeof(sc)));
+    crc=crc32b((uint8_t*)&sc, sizeof(sc));
+    printf ("\n  CRC32    : 0x%08X (%s)\n", crc, crc2os(crc));
   } else {
     printf ("\nsomething went wrong in function..");
   }
