@@ -80,6 +80,18 @@ typedef uint32_t ptr_t;
 #endif
 #endif
 
+typedef struct _os_sig_t {
+    uint32_t crc;
+    char     *os;
+} os_sig;
+
+// for get_verinfo(); // windows only
+typedef struct _os_ver_t {
+  uint32_t major;
+  uint32_t minor;
+  uint16_t build;
+} os_ver;
+
 #pragma pack(1)
 typedef struct ALIGNED_(1) _proc_ctx_t {
   uint32_t emu;
@@ -303,6 +315,34 @@ char ver[]= {
   /* 0031 */ "\xc3"                         /* ret                  */
 };
 
+#define wow64_SIZE 6
+
+char wow64[]= {
+  /* 0000 */ "\x31\xc0" /* xor eax, eax */
+  /* 0002 */ "\x48"     /* dec eax      */
+  /* 0003 */ "\xf7\xd8" /* neg eax      */
+  /* 0005 */ "\xc3"     /* ret          */
+};
+
+#define sol_SIZE 9
+
+char sol[]= {
+  /* 0000 */ "\x31\xc0"     /* xor eax, eax */
+  /* 0002 */ "\x66\x8c\xe8" /* mov ax, gs   */
+  /* 0005 */ "\xc1\xe8\x08" /* shr eax, 0x8 */
+  /* 0008 */ "\xc3"         /* ret          */
+};
+
+#define native_SIZE 12
+
+char native[]= {
+  /* 0000 */ "\x66\x8c\xe8"     /* mov ax, gs   */
+  /* 0003 */ "\x66\x83\xf8\x01" /* cmp ax, 0x1  */
+  /* 0007 */ "\x19\xc0"         /* sbb eax, eax */
+  /* 0009 */ "\xf7\xd8"         /* neg eax      */
+  /* 000B */ "\xc3"             /* ret          */
+};
+
 // execute code with one optional parameter
 int xcode(void *code, int code_len, void *param)
 {
@@ -357,11 +397,6 @@ int xcode(void *code, int code_len, void *param)
 }
 #endif
 
-typedef struct _os_sig_t {
-    uint32_t crc;
-    char     *os;
-} os_sig;
-
 // crc32 values of x86 cpu registers
 os_sig sigs[]=
 { { 0x90FF7C71, "Windows 95" },
@@ -404,21 +439,12 @@ char *crc2os(uint32_t crc) {
   return os;
 }
 
-// for get_verinfo(); // windows only
-typedef struct _os_ver_t {
-  uint32_t major;
-  uint32_t minor;
-  uint16_t build;
-} os_ver;
-
-#ifdef __cplusplus
-extern "C" {
 void get_verinfo(os_ver*);
 int get_ctx(proc_ctx*);
-}
-#endif
 
-// http://blog.rewolf.pl/blog/wp-content/uploads/2013/03/PEB_Evolution.pdf
+int is_wow64(void);     // windows 64-bit only
+int is_sol(void);       // solaris only
+int is_32bit(void);     // windows only
 
 int main(void) {
   proc_ctx pc;
@@ -441,8 +467,11 @@ int main(void) {
   memset(&pc, 0, sizeof(pc));
   memset(&sc, 0, sizeof(sc));
   
+  #ifndef TEST
   if (xcode(ctx, ctx_SIZE, &pc)) {
-    
+  #else
+  if (get_ctx(&pc)) {
+  #endif
     sc.cs=pc.cs;
     sc.ds=pc.ds;
     sc.es=pc.es;
@@ -456,8 +485,13 @@ int main(void) {
     
     printf ("\n\n  OS       : %s (CRC32 : 0x%08X)", crc2os(crc), crc);
     #ifdef WIN
-    xcode(ver, ver_SIZE, &vi);
     
+    #ifndef TEST
+    xcode(ver, ver_SIZE, &vi);
+    #else
+    get_verinfo(&vi);
+    #endif
+  
     printf ("\n  Win Ver  : %i.%i.%i\n", vi.major, vi.minor, vi.build);
     #endif
     printf ("\n  Binary   : %i-bit",
