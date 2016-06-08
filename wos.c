@@ -40,7 +40,27 @@
 #define WIN
 #include <windows.h>
 #include <shlwapi.h>
-#pragma comment (lib, "shlwapi.lib")
+#ifndef _MSC_VER
+#ifdef __i386__
+/* for x86 only */
+unsigned long __readfsdword(unsigned long Offset)
+{
+   unsigned long ret;
+   __asm__ volatile ("movl	%%fs:%1,%0"
+     : "=r" (ret) ,"=m" ((*(volatile long *) Offset)));
+   return ret;
+}
+#else
+/* for __x86_64 only */
+unsigned __int64 __readgsqword(unsigned long Offset)
+{
+   void *ret;
+   __asm__ volatile ("movq	%%gs:%1,%0"
+     : "=r" (ret) ,"=m" ((*(volatile long *) (unsigned __int64) Offset)));
+   return (unsigned __int64) ret;
+}
+#endif
+#endif
 #else
 #include <sys/mman.h>
 #include <errno.h>
@@ -172,9 +192,9 @@ uint32_t crc32b(uint8_t m[], int len) {
 
 #ifndef TEST
 
-#define w_SIZE 138
+#define ctx_SIZE 138
 
-char w[]= {
+char ctx[]= {
   /* 0000 */ "\x53"             /* push ebx           */
   /* 0001 */ "\x57"             /* push edi           */
   /* 0002 */ "\x51"             /* push ecx           */
@@ -257,11 +277,36 @@ char w[]= {
   /* 0088 */ "\xeb\xd5"         /* jmp 0x5f           */
 };
 
-typedef void (*get_ctx_t)(proc_ctx*);
+#define ver_SIZE 50
 
-int get_ctx(proc_ctx *c)
+char ver[]= {
+  /* 0000 */ "\x57"                         /* push edi             */
+  /* 0001 */ "\x56"                         /* push esi             */
+  /* 0002 */ "\x31\xc0"                     /* xor eax, eax         */
+  /* 0004 */ "\x48"                         /* dec eax              */
+  /* 0005 */ "\x74\x12"                     /* jz 0x19              */
+  /* 0007 */ "\x8b\x7c\x24\x0c"             /* mov edi, [esp+0xc]   */
+  /* 000B */ "\x64\xa1\x30\x00\x00\x00"     /* mov eax, [fs:0x30]   */
+  /* 0011 */ "\x8d\xb0\xa4\x00\x00\x00"     /* lea esi, [eax+0xa4]  */
+  /* 0017 */ "\xeb\x12"                     /* jmp 0x2b             */
+  /* 0019 */ "\x51"                         /* push ecx             */
+  /* 001A */ "\x5f"                         /* pop edi              */
+  /* 001B */ "\x65\x48"                     /* dec eax              */
+  /* 001D */ "\x8b\x04\x25\x60\x00\x00\x00" /* mov eax, [0x60]      */
+  /* 0024 */ "\x48"                         /* dec eax              */
+  /* 0025 */ "\x8d\xb0\x18\x01\x00\x00"     /* lea esi, [eax+0x118] */
+  /* 002B */ "\xa5"                         /* movsd                */
+  /* 002C */ "\xa5"                         /* movsd                */
+  /* 002D */ "\x66\xa5"                     /* movsw                */
+  /* 002F */ "\x5e"                         /* pop esi              */
+  /* 0030 */ "\x5f"                         /* pop edi              */
+  /* 0031 */ "\xc3"                         /* ret                  */
+};
+
+// execute code with one optional parameter
+int xcode(void *code, int code_len, void *param)
 {
-  get_ctx_t func;
+  void *func;
   #ifdef WIN
   DWORD op;
   #endif
@@ -269,10 +314,10 @@ int get_ctx(proc_ctx *c)
   
   //printf ("\n  Allocating executable memory...");
 #ifdef WIN
-  func=(get_ctx_t)VirtualAlloc (0, w_SIZE, 
+  func=(void*)VirtualAlloc (0, code_len, 
     MEM_COMMIT, PAGE_READWRITE);
 #else
-  func=(get_ctx_t)mmap (0, w_SIZE, 
+  func=(void*)mmap (0, code_len, 
     PROT_EXEC | PROT_WRITE | PROT_READ, 
     MAP_ANON  | MAP_PRIVATE, -1, 0);
 #endif
@@ -284,10 +329,10 @@ int get_ctx(proc_ctx *c)
 #endif
   {
     //printf ("\n  Executing function...");
-    memcpy (func, w, w_SIZE);
+    memcpy ((void*)func, code, code_len);
     #ifdef WIN
-      if (VirtualProtect((LPVOID)func, w_SIZE, PAGE_EXECUTE, &op)) {
-        func(c);
+      if (VirtualProtect((LPVOID)func, code_len, PAGE_EXECUTE, &op)) {
+        ((void(*)(void*))func)(param);
         ok=1;
       } else {
         xstrerror("VirtualProtect()");
@@ -297,9 +342,9 @@ int get_ctx(proc_ctx *c)
     ok=1;
     #endif
 #ifdef WIN
-    VirtualFree (func, w_SIZE, MEM_RELEASE);
+    VirtualFree ((LPVOID)func, code_len, MEM_RELEASE);
 #else
-    munmap (func, w_SIZE);
+    munmap (func, code_len);
 #endif
   } else {
     #ifdef WIN
@@ -319,26 +364,31 @@ typedef struct _os_sig_t {
 
 // crc32 values of x86 cpu registers
 os_sig sigs[]=
-{ { 0x90FF7C71, "Windows 95 32-bit PE32" },
-  { 0x1CC39FA2, "Windows NT 32-bit PE32" },
-  { 0x60A2BA79, "Windows 7 32-bit PE32"  },
-  { 0x53BD86D5, "Windows 7 64-bit PE32"  },
-  { 0x765A985F, "Windows 7 64-bit PE64"  },
-  { 0x0, "Windows 10 32-bit PE32" },
+{ { 0x90FF7C71, "Windows 95" },
+  { 0x1CC39FA2, "Windows NT/2000" },
+  { 0x00000000, "Windows 2008" },
+  { 0x00000000, "Windows 2012" },
+  { 0x00000000, "Windows Vista 64-bit PE32" },
+  { 0x00000000, "Windows Vista 64-bit PE64" },
+  { 0x60A2BA79, "Windows XP/Vista/7/8/10 32-bit PE32" },
+  { 0x53BD86D5, "Windows 7 64-bit PE32" },
+  { 0x765A985F, "Windows 7 64-bit PE64" },
+  { 0x00000000, "Windows 8 64-bit PE32" },
+  { 0x00000000, "Windows 8 64-bit PE64" },
   { 0x53BD86D5, "Windows 10 64-bit PE32" },
   { 0x33E4AD6D, "Windows 10 64-bit PE64" },
-  { 0x8AF4260F, "FreeBSD 32-bit ELF32"   },
-  { 0x74C940E1, "FreeBSD 64-bit ELF32"   },
-  { 0xD52CD651, "FreeBSD 64-bit ELF64"   },
-  { 0x2EE7520C, "OpenBSD 32-bit ELF32"   },
-  { 0x1687E328, "OpenBSD 64-bit ELF64"   },
-  { 0x7DA04053, "Linux 32-bit ELF32"     },
-  { 0x71867338, "Linux 64-bit ELF32"     },
-  { 0xDC37329E, "Linux 64-bit ELF64"     },
-  { 0xA70D2C31, "Solaris 32-bit ELF32"   },
-  { 0x0, "Mac OSX 32-bit ELF32"   },
-  { 0x7996CCC6, "Mac OSX 64-bit ELF32"   },
-  { 0x5B047308, "Mac OSX 64-bit ELF64"   }
+  { 0x8AF4260F, "FreeBSD 32-bit ELF32" },
+  { 0x74C940E1, "FreeBSD 64-bit ELF32" },
+  { 0xD52CD651, "FreeBSD 64-bit ELF64" },
+  { 0x2EE7520C, "OpenBSD 32-bit ELF32" },
+  { 0x1687E328, "OpenBSD 64-bit ELF64" },
+  { 0x7DA04053, "Linux 32-bit ELF32" },
+  { 0x71867338, "Linux 64-bit ELF32" },
+  { 0xDC37329E, "Linux 64-bit ELF64" },
+  { 0xA70D2C31, "Solaris 32-bit ELF32" },
+  { 0x00000000, "Mac OSX 32-bit ELF32" },
+  { 0x7996CCC6, "Mac OSX 64-bit ELF32" },
+  { 0x5B047308, "Mac OSX 64-bit ELF64" }
 };
 
 char *crc2os(uint32_t crc) {
@@ -354,15 +404,29 @@ char *crc2os(uint32_t crc) {
   return os;
 }
 
+// for get_verinfo(); // windows only
+typedef struct _os_ver_t {
+  uint32_t major;
+  uint32_t minor;
+  uint16_t build;
+} os_ver;
+
+#ifdef __cplusplus
+extern "C" {
+void get_verinfo(os_ver*);
+int get_ctx(proc_ctx*);
+}
+#endif
+
+// http://blog.rewolf.pl/blog/wp-content/uploads/2013/03/PEB_Evolution.pdf
+
 int main(void) {
   proc_ctx pc;
   sig_ctx  sc;
   uint32_t crc;
-  
-  ptr_t sc_v;
-  char *os="Unrecognized";
-  char *arch="unknown";
-  
+  ptr_t    sc_v;
+  os_ver   vi;
+
   printf ("\n  wos v0.1 - Identify OS on x86 architecture");
   
   setbuf(stdout, NULL);
@@ -377,7 +441,7 @@ int main(void) {
   memset(&pc, 0, sizeof(pc));
   memset(&sc, 0, sizeof(sc));
   
-  if (get_ctx(&pc)) {
+  if (xcode(ctx, ctx_SIZE, &pc)) {
     
     sc.cs=pc.cs;
     sc.ds=pc.ds;
@@ -388,49 +452,14 @@ int main(void) {
     sc.sc_err=pc.sc;
     sc.segbits=sg_bits(&sc);
     
-    // determine operating system
-    sc_v = (ptr_t)pc.sc;
-    sc_v &= 0xFF;
+    crc=crc32b((uint8_t*)&sc, sizeof(sc));
     
-    // windows 7 returns 5, windows 10 returns 8
-    if (sc_v==0 || sc_v==0x05 || sc_v==0x08) {
-      os="Windows";
-      if (pc.cs==0x23 || pc.cs==0x33) { 
-        arch="64"; 
-      } else arch="32";
-    } else if (sc_v==0x06 || (sc_v==0x09 && pc.fs==0) && pc.gs != 0x1c3) {
-      os="OSX";
-      if (pc.ds==0) {
-        arch="64";
-      } else arch="32";
-    } else if (sc_v==0x09) {
-      if (pc.ds==0x23 || pc.ds==0x33) {
-        os="OpenBSD";
-        if (pc.ds==0x23) {
-          arch="64";
-        } else arch="32";
-      } else if (pc.gs==0x1B && pc.ds==0x3B) {
-        os="FreeBSD";
-        if (pc.cs==0x43) {
-          arch="64";
-        } else arch="32";
-      } else if (pc.gs==0x1c3) {
-        os="Solaris";
-        if (pc.ds==0) {
-          arch="64";
-        } else arch="32";
-      } else {
-        os="BSD";
-      }
-    } else if (sc_v==0xF2 || sc_v==0xF7) {
-      os="Linux";
-      if (pc.cs==0x23 || pc.cs==0x33) { 
-        arch="64"; 
-      } else arch="32";
-    }
+    printf ("\n\n  OS       : %s (CRC32 : 0x%08X)", crc2os(crc), crc);
+    #ifdef WIN
+    xcode(ver, ver_SIZE, &vi);
     
-    printf ("\n\n  OS       : %s x%s", os, arch);
-    
+    printf ("\n  Win Ver  : %i.%i.%i\n", vi.major, vi.minor, vi.build);
+    #endif
     printf ("\n  Binary   : %i-bit",
       pc.emu ? 32 : 64);
     
@@ -443,9 +472,7 @@ int main(void) {
     printf ("\n  Stack Ptr: 0x%p", pc.sp);
     printf ("\n  Syscall E: 0x%p", pc.sc);
     
-    printf ("\n  Segments : 0x%08X", sc.segbits);
-    crc=crc32b((uint8_t*)&sc, sizeof(sc));
-    printf ("\n  CRC32    : 0x%08X (%s)\n", crc, crc2os(crc));
+    printf ("\n  Segments : 0x%08X\n", sc.segbits);
   } else {
     printf ("\nsomething went wrong in function..");
   }
