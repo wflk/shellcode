@@ -338,7 +338,7 @@ int xcode(void *code, int code_len, void *param)
         xstrerror("VirtualProtect()");
       }
     #else
-    func(c);
+    ((void(*)(void*))func)(param);
     ok=1;
     #endif
 #ifdef WIN
