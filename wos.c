@@ -78,6 +78,41 @@ typedef struct ALIGNED_(1) _proc_ctx_t {
   void*    sc;
 } proc_ctx;
 
+#pragma pack(1)
+typedef struct ALIGNED_(1) _seg_ctx_t {
+  // segment registers
+  union {
+    uint16_t segment[6];
+    struct {
+      uint16_t cs;
+      uint16_t ds;
+      uint16_t es;
+      uint16_t fs;
+      uint16_t gs;
+      uint16_t ss;
+    };
+  };
+} seg_ctx;
+
+// for each nibble of a 16-bit segment, set one bit if it true.
+uint32_t segnb (seg_ctx *c) {
+    int      i, j;
+    uint32_t r=0;
+    uint16_t s;
+    
+    for (i=0; i<6; i++) {
+      s=c->segment[i];     // get a segment
+      for (j=0; j<4; j++) {
+        if (s & 15) {      // if not zero, set bit
+          r |= 1;          // set bit
+        }
+        s >>= 4;           // shift 4-bits
+        r <<= 1;           // shift 1-bit
+      }
+    }
+    return r;
+}
+
 #ifdef WIN
 /**F*****************************************************************/
 void xstrerror (char *fmt, ...) 
@@ -96,7 +131,7 @@ void xstrerror (char *fmt, ...)
   DWORD   dwError=GetLastError();
   
   va_start (arglist, fmt);
-  wvnsprintf (buffer, sizeof(buffer) - 1, fmt, arglist);
+  vsprintf (buffer, fmt, arglist);
   va_end (arglist);
   
   if (FormatMessage (
@@ -277,6 +312,8 @@ int get_ctx(proc_ctx *c)
 
 int main(void) {
   proc_ctx pc;
+  seg_ctx sc;
+  
   ptr_t sc_v;
   char *os="Unrecognized";
   char *arch="unknown";
@@ -293,8 +330,16 @@ int main(void) {
 #endif
 
   memset(&pc, 0, sizeof(pc));
+  memset(&sc, 0, sizeof(sc));
   
   if (get_ctx(&pc)) {
+    
+    sc.cs=pc.cs;
+    sc.ds=pc.ds;
+    sc.es=pc.es;
+    sc.fs=pc.fs;
+    sc.gs=pc.gs;
+    sc.ss=pc.ss;
     
     // determine operating system
     sc_v = (ptr_t)pc.sc;
@@ -348,9 +393,11 @@ int main(void) {
     printf ("\n  Segments : fs=0x%02X gs=0x%02X ss=0x%02X\n",
       pc.fs, pc.gs, pc.ss);
     
-    printf ("\n  Stack Ptr: %p", pc.sp);
-    printf ("\n  Syscall E: %p", pc.sc);
-    printf ("\n  CRC32    : %08X\n", crc32b((uint8_t*)&pc, sizeof(pc)));
+    printf ("\n  Stack Ptr: 0x%p", pc.sp);
+    printf ("\n  Syscall E: 0x%p", pc.sc);
+    
+    printf ("\n  Segments : 0x%08X", segnb(&sc));
+    printf ("\n  CRC32    : 0x%08X\n", crc32b((uint8_t*)&sc, sizeof(sc)));
   } else {
     printf ("\nsomething went wrong in function..");
   }
