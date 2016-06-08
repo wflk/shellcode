@@ -79,7 +79,7 @@ typedef struct ALIGNED_(1) _proc_ctx_t {
 } proc_ctx;
 
 #pragma pack(1)
-typedef struct ALIGNED_(1) _seg_ctx_t {
+typedef struct ALIGNED_(1) _sig_ctx_t {
   // segment registers
   union {
     uint16_t segment[6];
@@ -92,10 +92,12 @@ typedef struct ALIGNED_(1) _seg_ctx_t {
       uint16_t ss;
     };
   };
-} seg_ctx;
+  uint32_t segbits;
+  void *sc_err;
+} sig_ctx;
 
 // for each nibble of a 16-bit segment, set one bit if it true.
-uint32_t segnb (seg_ctx *c) {
+uint32_t sg_bits (sig_ctx *c) {
     int      i, j;
     uint32_t r=0;
     uint16_t s;
@@ -310,9 +312,22 @@ int get_ctx(proc_ctx *c)
 }
 #endif
 
+typedef struct _os_sig_t {
+    uint32_t crc32;
+    char     *os;
+} os_sig;
+
+os_sig sigs[]=
+{
+  {0x53BD86D5, "Windows 7 x64 PE32"},
+  {0x765A985F, "Windows 7 x64 PE64"},
+  {0x6E3E5BEC, "FreeBSD x64"},
+  {0x4A74DA18, "FreeBSD x64"}
+};
+
 int main(void) {
   proc_ctx pc;
-  seg_ctx sc;
+  sig_ctx sc;
   
   ptr_t sc_v;
   char *os="Unrecognized";
@@ -340,6 +355,8 @@ int main(void) {
     sc.fs=pc.fs;
     sc.gs=pc.gs;
     sc.ss=pc.ss;
+    sc.sc_err=pc.sc;
+    sc.segbits=sg_bits(&sc);
     
     // determine operating system
     sc_v = (ptr_t)pc.sc;
@@ -396,7 +413,7 @@ int main(void) {
     printf ("\n  Stack Ptr: 0x%p", pc.sp);
     printf ("\n  Syscall E: 0x%p", pc.sc);
     
-    printf ("\n  Segments : 0x%08X", segnb(&sc));
+    printf ("\n  Segments : 0x%08X", sc.segbits);
     printf ("\n  CRC32    : 0x%08X\n", crc32b((uint8_t*)&sc, sizeof(sc)));
   } else {
     printf ("\nsomething went wrong in function..");
